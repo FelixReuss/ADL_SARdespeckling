@@ -1,52 +1,59 @@
 from adl_sardespeckling.model import *
 from adl_sardespeckling.utils import *
 from random import shuffle
-import matplotlib.pyplot as plt
 import tifffile
 import os
 import os.path
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler
+from keras.models import load_model
 
 
 os.environ['LD_LIBRARY_PATH']=r'/usr/local/cuda-10.0/lib64/'
 
-def get_model(patch_size, n_channels):
+def get_model(patch_size, n_channels, **kwargs):
     """
-     Python Implementation of lee filter function. Removes speckle like noise from an input image using a weighted uniform filter
+     Helper function creating a U-Net model instance with the given parameters
 
      Parameters
      __________
-     input_array: str
-         path to the input image
-     size: int
-         size of the filter kernel
+     patch_size: int
+         shape of the input patches
+     n_channels: int
+         number of channels of the in input patches
+     Keyword Arguments:
+         n_filters_start (int): Number of filters at the fist Conv block
+         growth_factor (int): Growth factor of the filters after ever downsampling block
+         kernel_siz (int): Size of filter kernel
+         droprate (float): drop rate of the Dropout layers (percentage of Neurons dropped)
 
      Returns
      _______
-     out_array: array
-         filtered output array
+     unet_model: Instance of the Keras model class
      """
-    return unet_model(patch_size, patch_size, n_channels)
+    return unet_model(im_sz=patch_size, n_channels=n_channels, **kwargs)
 
-def train_model(image_path, reference_path, steps_per_epoch, save_model=None):
+def train_model(image_path, reference_path, steps_per_epoch, batch_size, patch_size, n_channels, epochs, save_model=None):
     """
-     Python Implementation of lee filter function. Removes speckle like noise from an input image using a weighted uniform filter
+     Function to train Residual U-Net Depspekling Model
 
      Parameters
      __________
-     input_array: str
-         path to the input image
-     size: int
-         size of the filter kernel
-
-     Returns
-     _______
-     out_array: array
-         filtered output array
+     image_path: str
+         path to the input images
+     reference_path: str
+         path to the reference images
+     steps_per_epoch: int
+         number of steps per epoch. steps_per_epoch*batch_size should equal number of training samples
+     bacth_size: int
+         number of samples for each training step. steps_per_epoch*batch_size should equal number of training samples
+     patch_size: int
+         shape of the input patches
+     n_channels: int
+         number of channels of the in input patches
+     epochs: int
+         number of epochs to train the model on
      """
-    image_path = r"///home/freuss/ADL/inputdata/patches/train3"
-    reference_path = r"///home/freuss/ADL/inputdata/patches/reference3"
 
     #Name of the label image patches and reference image patches, currently hardcoded
     labels = 'train'
@@ -62,14 +69,14 @@ def train_model(image_path, reference_path, steps_per_epoch, save_model=None):
     trainIds, valIds = train_test_split(image_ids, test_size=0.2, random_state=42)
 
     #Initialize training and validation generator
-    training_generator = DataGenerator(trainIds, labels, labels_ref, image_path, reference_path, dim=(400, 400))
-    validation_generator = DataGenerator(valIds, labels, labels_ref, image_path, reference_path, dim=(400, 400))
+    training_generator = DataGenerator(trainIds, labels, labels_ref, image_path, reference_path, batch_size=batch_size, dim=(400, 400))
+    validation_generator = DataGenerator(valIds, labels, labels_ref, image_path, reference_path, batch_size=batch_size, dim=(400, 400))
 
     #Initialize U-Net model
     model = get_model(patch_size, n_channels)
 
     #Fit the model
-    history = model.fit_generator(training_generator, validation_data=validation_generator,
+    model.fit_generator(training_generator, validation_data=validation_generator,
                                   steps_per_epoch=steps_per_epoch, epochs=epochs)
 
     # Save the model
@@ -78,75 +85,41 @@ def train_model(image_path, reference_path, steps_per_epoch, save_model=None):
             os.mkdir(save_model)
         model.save(save_model)
 
-def make_prediction(path2input):
+def make_prediction(path2input, path2model, outpath):
     """
      Python Implementation of lee filter function. Removes speckle like noise from an input image using a weighted uniform filter
 
      Parameters
      __________
-     input_array: str
-         path to the input image
-     size: int
-         size of the filter kernel
-
-     Returns
-     _______
-     out_array: array
-         filtered output array
+     path2input: str
+         path to the noisy input image to despeckle
+     path2model: str
+         path to the keras model. .hd5 or .h5 file expected
+     outpath: str
+         output path including file name to store the despeckled image
      """
-    pass
 
-if __name__ == '__main__':
-    weights_path = 'weights'
-    if not os.path.exists(weights_path):
-        os.makedirs(weights_path)
-    weights_path += '/unet_weights.hdf5'
+    #Load the input data
+    image_array = tiff.imread(path2input)
 
-    n_channels = 1
-    # calcualte automatically CLASS_WEIGHTS = tf.contrib.losses.softmax_cross_entropy(logits, onehot_labels, weight=weight)
-    epochs = 100
-    steps_per_epoch = 16
-    upconv = True
-    patch_size = 400  # should divide by 16
-    batch_size = 500
-
-    # ------------Traiining-------------#
-    image_path = r"///home/freuss/ADL/inputdata/patches/train3"
-    mask_path = r"///home/freuss/ADL/inputdata/patches/reference3"
-    labels = 'train'
-    labels_ref = 'reference'
-    image_ids = list(range(0, 6000))
-    shuffle(image_ids)
-    trainIds, valIds = train_test_split(image_ids, test_size=0.2, random_state=42)
-    training_generator = DataGenerator(trainIds, labels, labels_ref, image_path, mask_path, dim=(400, 400))
-    validation_generator = DataGenerator(valIds, labels, labels_ref,image_path, mask_path, dim=(400, 400))
-    #test = training_generator._generate_X(trainIds)
-    model = get_model(patch_size, n_channels)
-
-    history = model.fit_generator(training_generator, validation_data=validation_generator, steps_per_epoch=steps_per_epoch, epochs=epochs)
-
-    # ------------Evaluation-------------#
-    plt.plot(history.history['loss'], label='train loss')
-    plt.plot(history.history['val_loss'], label='test loss ')
-    plt.legend()
-    plt.show()
-
-
-
-    # ------------Prediction-------------#
-    image_array = tiff.imread(r'//home/freuss/ADL/inputdata/patches/train3/train_2575.tif')
+    #Scale input data to match with training data
     scaler = StandardScaler()
     scaler.fit(image_array)
     X_norm = scaler.transform(image_array)
+
+    #Expand the dimensions to match requirements from model
     X_norm = np.expand_dims(X_norm, axis=2)
     X_norm = np.expand_dims(X_norm, axis=0)
+
+    #Load the Keras U-Net model
+    model = load_model(path2model)
+
+    #Make the prediction
     pred_array = model.predict(X_norm)
-    pred_array = pred_array[0,:, :,0]
-    tifffile.imsave(r'//home/freuss/ADL/pred_2575_standard_unscaled_tanh100_leaky_mse.tif', pred_array)
+
+    #Remove expandes dimensions
+    pred_array = pred_array[0, :, :, 0]
+
+    #Save prediction to file
     pred_array_unscaled = scaler.inverse_transform(pred_array)
     tifffile.imsave(r'//home/freuss/ADL/pred_2575_standard_tanh100_leaky_mse.tif', pred_array_unscaled)
-
-    #Save the model
-    model.save(r'//home/freuss/ADL/model1.h5')
-    #Save the model
-    #model.save(filepath)

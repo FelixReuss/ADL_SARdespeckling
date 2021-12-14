@@ -38,7 +38,7 @@ def unet_model(im_sz=288, n_channels=4, n_filters_start=16, growth_factor=2, ker
      kernel_size: int
          size of the filfter kernels. Default is 5,5
      droprate: float
-         droprate of the Dropout Layer. Float number between 0-1
+         droprate of the Dropout Layer (percentage of Neurons dropped). Float number between 0-1
 
      Returns
      _______
