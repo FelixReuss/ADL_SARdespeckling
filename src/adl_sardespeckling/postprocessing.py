@@ -6,7 +6,7 @@ def reconstruct_image(patch_dir, out_dir):
 
 def diff_image(image1_path, image2_path, diffimage_outpath):
     """
-     Python Implementation of lee filter function. Removes speckle like noise from an input image using a weighted uniform filter
+     Function to calculte the difference in dB between to given images
 
      Parameters
      __________

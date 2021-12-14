@@ -38,7 +38,7 @@ def lee_filter(input_array, size):
 
 def add_speckle_noise(image_path, stdv_path, out_path):
     """
-     Generate one batch of data
+     Function to add simulated speckle noise to SAR data
 
      Parameters
      __________

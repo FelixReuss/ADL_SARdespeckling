@@ -35,7 +35,7 @@ def get_model(patch_size, n_channels, **kwargs):
 
 def train_model(image_path, reference_path, steps_per_epoch, batch_size, patch_size, n_channels, epochs, save_model=None):
     """
-     Function to train Residual U-Net Depspekling Model
+     Function to train Residual U-Net Despeckling model using the provided parameters
 
      Parameters
      __________
@@ -87,7 +87,7 @@ def train_model(image_path, reference_path, steps_per_epoch, batch_size, patch_s
 
 def make_prediction(path2input, path2model, outpath):
     """
-     Python Implementation of lee filter function. Removes speckle like noise from an input image using a weighted uniform filter
+     Function to make prediction using the input path for a pretrained Residual U-Net Despeckling model
 
      Parameters
      __________
