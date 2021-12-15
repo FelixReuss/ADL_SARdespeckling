@@ -122,4 +122,4 @@ def make_prediction(path2input, path2model, outpath):
 
     #Save prediction to file
     pred_array_unscaled = scaler.inverse_transform(pred_array)
-    tifffile.imsave(r'//home/freuss/ADL/pred_2575_standard_tanh100_leaky_mse.tif', pred_array_unscaled)
+    tifffile.imsave(outpath, pred_array_unscaled)
