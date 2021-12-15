@@ -50,10 +50,11 @@ class TestWorkflow(unittest.TestCase):
         """
         Tests extracting patches from SAR scence by checking if extracted patches can be opened as image
         """
-        patch_size = 400
+        patch_size = random.choice([10, 20, 40, 80])
         outstring = 'test'
-        patch_extractor(os.path.join(self.data_path, 'TMENSIG38_E065N034T1.tif'), self.output_path, outstring, patch_size=patch_size)
-        image_path = random.choice(os.listdir(self.output_path))
+        patch_extractor([os.path.join(self.data_path, 'TMENSIG38_E065N034T1.tif')], self.output_path, outstring, patch_size=patch_size)
+        random_image = random.choice(os.listdir(self.output_path))
+        image_path = os.path.join(self.output_path, random_image)
         image = Image.open(image_path)
 
         self.assertIsInstance(image, Image.Image)
@@ -77,7 +78,7 @@ class TestWorkflow(unittest.TestCase):
 
 
     def test_unet_model(self):
-        patch_size = random.choice([100, 200, 400, 800])
+        patch_size = 400
         unet_model = get_model(patch_size=patch_size)
 
         self.assertIsInstance(unet_model, Model)

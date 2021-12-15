@@ -36,7 +36,7 @@ def lee_filter(input_array, size):
     out_array = img_mean + img_weights * (input_array - img_mean)
     return out_array
 
-def add_speckle_noise(image_path, stdv_path, out_path):
+def add_speckle_noise(image_path, stdv_path, out_path, ):
     """
      Function to add simulated speckle noise to SAR data
 
@@ -110,6 +110,7 @@ def patch_extractor(image_paths, outdir, outstring, patch_size=400):
 
     # Counter for all files and tiles
     main_idx = 0
+
     # Loop over all input paths
     for f, file_path in enumerate(image_paths):
         file_name = os.path.basename(file_path)[:-4]
