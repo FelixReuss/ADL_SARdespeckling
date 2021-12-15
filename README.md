@@ -2,7 +2,7 @@
 [![RTD](https://readthedocs.org/projects/adl_sardespeckling/badge/?version=latest)](http://adl_sardespeckling.readthedocs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-==================
+
 ADL_SARdespeckling
 ==================
 
