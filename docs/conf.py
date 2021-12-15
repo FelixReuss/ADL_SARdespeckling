@@ -12,7 +12,33 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('H:/GIT/ADL_SARdespeckling'))
+import inspect
+import shutil
+
+__location__ = os.path.join(os.getcwd(), os.path.dirname(
+    inspect.getfile(inspect.currentframe())))
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.join(__location__, '../src'))
+
+# -- Run sphinx-apidoc ------------------------------------------------------
+# This hack is necessary since RTD does not issue `sphinx-apidoc` before running
+# `sphinx-build -b html . _build/html`. See Issue:
+# https://github.com/rtfd/readthedocs.org/issues/1139
+# DON'T FORGET: Check the box "Install your project inside a virtualenv using
+# setup.py install" in the RTD Advanced Settings.
+# Additionally it helps us to avoid running apidoc manually
+
+try:  # for Sphinx >= 1.7
+    from sphinx.ext import apidoc
+except ImportError:
+    from sphinx import apidoc
+
+output_dir = os.path.join(__location__, "api")
+module_dir = os.path.join(__location__, "../src/adl_sardespeckling")
+
 
 # -- Project information -----------------------------------------------------
 
@@ -21,7 +47,7 @@ copyright = '2021, FelixReuss'
 author = 'FelixReuss'
 
 # The full version, including alpha/beta/rc tags
-release = '14.12.2021'
+release = '12.12.2021'
 
 
 # -- General configuration ---------------------------------------------------
@@ -29,13 +55,7 @@ release = '14.12.2021'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-'sphinx.ext.napoleon',
-]
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
-
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
