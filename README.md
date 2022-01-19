@@ -1,5 +1,4 @@
-[![RTD](https://readthedocs.org/projects/adl_sardespeckling/badge/?version=latest)](http://adl_sardespeckling.readthedocs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<img align="right" src="https://github.com/FelixReuss/ADL_SARdespeckling/blob/main/docs/imgs/adl_sardepsckling_readme.png" height="300" width="435">
 
 
 ADL_SARdespeckling
