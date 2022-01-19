@@ -64,7 +64,7 @@ To apply your own or the pre-trained model to a SAR image call the following fun
 Model prediction
 ==============
 To make predictions for image patches on a pre_trained model call the following function from th run.py modul
--function prdict --path2input *your_input_path* --path2model *your_model_path* --outpath *your_output_path*
+-function predict --path2input *your_input_path* --path2model *your_model_path* --outpath *your_output_path*
 
 Depseckling SAR image
 ==============
