@@ -11,6 +11,7 @@ Description
 
 The basic workflow setup includes the following modules and tasks:
 
+- run: modul to run function via command line interface
 - preprocessing: preperation of the training data
 	- add_speckle_noise: Function to add simulated speckle noise to SAR data
 	- patch_extractor: Extracts image square shaped patches from input images and writes them to file
@@ -20,7 +21,7 @@ The basic workflow setup includes the following modules and tasks:
 	- train_model: Function to train Residual U-Net Despeckling model using the provided parameters
 	- make_prediction: Function to make prediction using the input path for a pretrained Residual U-Net Despeckling model
 - postprocessing: postprocessing to evaluate the predictions and reconstruct predicted data
-	- reconstruct_image: Function to merge patches to the extent of the original SAR scene and georeference it
+	- despeckle_sar_image: Function to merge patches to the extent of the original SAR scene and georeference it
 	- diff_image: Function to calculte the difference in dB between to given images
 - utils: Provides class to load and feed data to the model
 	- DataGenerator: Class that generates data for Keras Sequence based data generator
