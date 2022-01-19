@@ -27,17 +27,16 @@ from PIL import Image
 from keras.engine.training import Model
 from adl_sardespeckling.preprocessing import add_speckle_noise, patch_extractor
 from adl_sardespeckling.postprocessing import diff_image
-from adl_sardespeckling.utils import DataGenerator
 from adl_sardespeckling.train import get_model
-from adl_sardespeckling.train import train_model
-import warnings
+from adl_sardespeckling.postprocessing import despeckle_sar_image
 
 class TestWorkflow(unittest.TestCase):
 
     def setUp(self):
         """ Set up input and output path """
-        self.data_path = os.path.join(os.path.dirname(__file__), "test_data")
-        self.output_path = os.path.join(os.path.dirname(__file__), "test_output")
+        self.data_path = os.path.join(os.path.dirname(__file__), 'test_data')
+        self.output_path = os.path.join(os.path.dirname(__file__), 'test_output')
+        self.model_path = os.path.abspath(os.path.dirname(os.path.dirname( __file__ )), 'src', 'adl_sardespeckling', 'momdels')
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
 
@@ -76,14 +75,10 @@ class TestWorkflow(unittest.TestCase):
 
         self.assertNotEqual(noise_array, org_array)
 
-
-    def test_unet_model(self):
-        patch_size = 400
-        unet_model = get_model(patch_size=patch_size)
-
-        self.assertIsInstance(unet_model, Model)
-
     def test_diff_image(self):
+        """
+        Tests diff image calculation by comparing two image arrays
+        """
         image_path = os.path.join(self.data_path,
                               'TMENSIG38_E065N034T1.tif')
         stdv_path = os.path.join(self.data_path,
@@ -94,6 +89,22 @@ class TestWorkflow(unittest.TestCase):
         image = Image.open(diffimage_outpath)
 
         self.assertIsInstance(image, Image.Image)
+
+    def test_despeckle_Sar_image(self):
+        """
+        Tests despeckling sar image by comparing original image array with despeckled image array
+        """
+        image_path = os.path.join(self.data_path,
+                              'M20180731_055009--_SIG0-----_S1AIWGRDH1VVD_037_A0104_EU010M_E045N021T1.tif')
+        model_path = os.path.join(self.model_path, 'model_5kernel_mse.h5')
+        noise_image = Image.open(image_path)
+        despeckle_sar_image(image1_path=image_path, output_path=self.output_path, path2model=model_path, overlay=40)
+        noise_image_path = os.path.join(self.output_path,
+                                        r'SIG0-SPECKLE-TEST3Kernel-Log-_20180731T055009--_20180731T055009--_VV__E045N021T1_EU010M_V1M0R01_S1AIWGRDH.tif')
+        noise_free_image = Image.open(noise_image_path)
+
+        self.assertNotEqual(noise_image, noise_free_image)
+
 
 if __name__ == '__main__':
     unittest.main()

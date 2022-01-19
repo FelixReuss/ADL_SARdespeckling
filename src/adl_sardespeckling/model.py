@@ -1,24 +1,10 @@
 import os
+import keras
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1"
 os.environ['LD_LIBRARY_PATH'] = r'/usr/local/cuda-10.0/lib64/'
-from keras.models import *
-from keras.layers import *
-import tensorflow as tf
-import keras
-from tensorflow.python.client import device_lib
-
-# Some helper functions to check if GPU is available
-def get_available_devices():
-    local_device_protos = device_lib.list_local_devices()
-    return [x.name for x in local_device_protos]
-print('Available devices', get_available_devices())
-print('GPU device names', tf.test.gpu_device_name())
-#print('List all GPUs:', tf.config.list_physical_devices('GPU'))
-
-#Checks if CUDA is correclt built
-print('GPU available:', tf.test.is_gpu_available())
-print('Tensorflow built with CUDA:', tf.test.is_built_with_cuda())
+from keras.models import Model
+from keras.layers import Input, Conv2D, LeakyReLU, Dropout, MaxPooling2D, UpSampling2D, concatenate
 
 def unet_model(im_sz=288, n_channels=4, n_filters_start=16, growth_factor=2, kernel_size=(5, 5), droprate = 0.25):
     """
@@ -48,70 +34,101 @@ def unet_model(im_sz=288, n_channels=4, n_filters_start=16, growth_factor=2, ker
     #First downsampling block. Each block consists of 2 convolutional layers, one maxpooling layer and one dropout layer
     n_filters = n_filters_start
     inputs = Input((im_sz, im_sz, n_channels))
-    conv1 = Conv2D(n_filters, kernel_size,  activation=LeakyReLU(alpha=0.1), padding='same', kernel_initializer='he_normal')(inputs)
-    conv1 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv1)
-    pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+    conv1 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(inputs)
+    actv1 = LeakyReLU(alpha=0.1)(conv1)
+    conv1 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv1)
+    actv1 = LeakyReLU(alpha=0.1)(conv1)
+    pool1 = MaxPooling2D(pool_size=(2, 2))(actv1)
     pool1 = Dropout(droprate)(pool1)
 
-    # Second downsampling block
+    # Second downsampling block.
     n_filters *= growth_factor
-    conv2 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(pool1)
-    conv2 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv2)
-    pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+    conv2 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(pool1)
+    actv2 = LeakyReLU(alpha=0.1)(conv2)
+    conv2 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv2)
+    actv2 = LeakyReLU(alpha=0.1)(conv2)
+    pool2 = MaxPooling2D(pool_size=(2, 2))(actv2)
     pool2 = Dropout(droprate)(pool2)
 
-    # 3rd downsampling block
+    # Thrd downsampling block.
     n_filters *= growth_factor
-    conv3 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(pool2)
-    conv3 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv3)
-    pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+    conv3 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(pool2)
+    actv3 = LeakyReLU(alpha=0.1)(conv3)
+    conv3 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv3)
+    actv3 = LeakyReLU(alpha=0.1)(conv3)
+    pool3 = MaxPooling2D(pool_size=(2, 2))(actv3)
     pool3 = Dropout(droprate)(pool3)
 
-    # 4th downsampling block
+    # Fourth downsampling block.
     n_filters *= growth_factor
-    conv4 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(pool3)
-    conv4 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv4)
-    drop4 = Dropout(0.5)(conv4)
+    conv4 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(pool3)
+    actv4 = LeakyReLU(alpha=0.1)(conv4)
+    conv4 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv4)
+    actv4 = LeakyReLU(alpha=0.1)(conv4)
+    drop4 = Dropout(droprate)(actv4)
     pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
     pool4 = Dropout(droprate)(pool4)
 
-    # bottom block. Consists only of 2 concolutional layers
+    # Bottom block
     n_filters //= growth_factor
-    conv5 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(pool4)
-    conv5 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv5)
+    conv5 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(pool4)
+    actv5 = LeakyReLU(alpha=0.1)(conv5)
+    conv5 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv5)
+    actv5 = LeakyReLU(alpha=0.1)(conv5)
 
-    # First upsampling block. Each block consists of 2 convolutional layers, one transpose convolutional layer and a concetanation to the convolutional layer of the corresponding downsampling block
+    # First upsamplnig block. Each upsampling block consists of a residual layer, resizing convolutions and convolutions
     n_filters //= growth_factor
-    up6 = concatenate([Conv2DTranspose(n_filters, (2, 2), strides=(2, 2), padding='same')(conv5), conv4])
-    merge6 = concatenate([drop4, up6], axis=3)
-    conv6 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(merge6)
-    conv6 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv6)
+    up6 = UpSampling2D(size=2, interpolation='bilinear')(actv5)
+    conv6 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(up6)
+    actv6 = LeakyReLU(alpha=0.1)(conv6)
+    conc6 = concatenate([actv6, actv4])
+    merge6 = concatenate([drop4, conc6], axis=3)
+    conv6 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(merge6)
+    actv6 = LeakyReLU(alpha=0.1)(conv6)
+    conv6 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv6)
+    actv6 = LeakyReLU(alpha=0.1)(conv6)
 
-    # 2nd upsampling block
+    # Second upsamplnig block.
     n_filters //= growth_factor
-    up7 = concatenate([Conv2DTranspose(n_filters, (2, 2), strides=(2, 2), padding='same')(conv6), conv3])
-    merge7 = concatenate([conv3, up7], axis=3)
-    conv7 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(merge7)
-    conv7 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv7)
+    up7 = UpSampling2D(size=2, interpolation='bilinear')(actv6)
+    conv7 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(up7)
+    actv7 = LeakyReLU(alpha=0.1)(conv7)
+    conc7 = concatenate([actv7, actv3])
+    merge7 = concatenate([actv3, conc7], axis=3)
+    conv7 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(merge7)
+    actv7 = LeakyReLU(alpha=0.1)(conv7)
+    conv7 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv7)
+    actv7 = LeakyReLU(alpha=0.1)(conv7)
 
-    # 3rd upsampling block
+    # Third upsamplnig block.
     n_filters //= growth_factor
-    up8 = concatenate([Conv2DTranspose(n_filters, (2, 2), strides=(2, 2), padding='same')(conv7), conv2])
-    merge8 = concatenate([conv2, up8], axis=3)
-    conv8 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(merge8)
-    conv8 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv8)
+    up8 = UpSampling2D(size=2, interpolation='bilinear')(actv7)
+    conv8 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(up8)
+    actv8 = LeakyReLU(alpha=0.1)(conv8)
+    conc8 = concatenate([actv8, actv2])
+    merge8 = concatenate([actv2, conc8], axis=3)
+    conv8 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(merge8)
+    actv8 = LeakyReLU(alpha=0.1)(conv8)
+    conv8 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv8)
+    actv8 = LeakyReLU(alpha=0.1)(conv8)
 
-    # 4th upsampling block
-    up9 = concatenate([Conv2DTranspose(n_filters, (2, 2), strides=(2, 2), padding='same')(conv8), conv1])
-    merge9 = concatenate([conv1, up9], axis=3)
-    conv9 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(merge9)
-    conv9 = Conv2D(n_filters, kernel_size, activation=LeakyReLU(alpha=0.01), padding='same', kernel_initializer='he_normal')(conv9)
-    output = Conv2D(1, (1, 1), activation='tanh', padding='same', kernel_initializer='he_normal')(conv9)
-    #output = Lambda(squeeze_lastaxes_operator, output_shape=squeeze_lastaxes_shape)(conv10)
+    # Fourth upsamplnig block.
+    up9 = UpSampling2D(size=2, interpolation='bilinear')(actv8)
+    conv9 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(up9)
+    actv9 = LeakyReLU(alpha=0.1)(conv9)
+    conc9 = concatenate([actv9, actv1])
+    merge9 = concatenate([actv1, conc9], axis=3)
+    conv9 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(merge9)
+    actv9 = LeakyReLU(alpha=0.1)(conv9)
+    conv9 = Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(actv9)
+    actv9 = LeakyReLU(alpha=0.1)(conv9)
 
-    # First downsampling block. Each block consists of 2 convolutional layers, one maxpooling layer and one dropout layer
+    # Output layer
+    output = Conv2D(1, (1, 1), activation='linear', padding='same', kernel_initializer='he_normal')(actv9)
+
+    # Compiling model
     model = Model(input=inputs, output=output)
-    opt = keras.optimizers.Adam(lr=5e-6, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False)
+    opt = keras.optimizers.Adam(lr=8e-7, beta_1=0.9, beta_2=0.999, epsilon=1e-07, amsgrad=False)
     model.compile(optimizer=opt, loss='logcosh', metrics=['logcosh'])
     model.summary()
 

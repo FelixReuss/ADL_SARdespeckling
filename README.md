@@ -57,15 +57,19 @@ As the input SAR images are very large and exceed the allowed file size, they ar
 
 Model training
 =========
-Currently the workflow is only designed to be run in a Python IDE. In the final version, a command line interface will be supported.
-To train the model on prepared data, use the function train_model of the train module and provided the required parameters. 
+To apply your own or the pre-trained model to a SAR image call the following function from th run.py modul
+-function train --train_path *your_input_training_data_path* --reference_path *your_reference_data_path* --batch_size *your_batch_size* --steps_per_epochs *your_steps_peer_epoch* --patch_size *your_patch_size* --n_channels *your_number_of_channels* --epochs *your_numbere_of_epochs* --save_model *true/false*
 
 
 Model prediction
 ==============
-Currently the workflow is only designed to be run in a Python IDE. In the final version, a command line interface will be supported.
-To make predictions aka despeckle data, use the function make_predictions of the train module and provided the required parameters. 
+To make predictions for image patches on a pre_trained model call the following function from th run.py modul
+-function prdict --path2input *your_input_path* --path2model *your_model_path* --outpath *your_output_path*
 
+Depseckling SAR image
+==============
+To apply your own or the pre-trained model to a SAR image call the following function from th run.py modul
+-function despeckle --input_path *your_input_path* --output_path *your_output_path* --path2model *your_model_path* --overlay *e.g. 40*
 
 Note
 ====

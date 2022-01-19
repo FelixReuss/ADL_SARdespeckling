@@ -11,6 +11,24 @@ from keras.models import load_model
 
 os.environ['LD_LIBRARY_PATH']=r'/usr/local/cuda-10.0/lib64/'
 
+def calculate_mse(ref_image_array, pred_array_unscaled):
+    """
+     Helper function to calculate mean squared error
+
+     Parameters
+     __________
+     ref_image_array: int or array
+         array with true values
+     pred_array_unscaled: int or array
+         array with actual values
+
+     Returns
+     _______
+     mse: mean sqaured error
+     """
+    mse = np.square(np.subtract(ref_image_array, pred_array_unscaled)).mean()
+    return mse
+
 def get_model(patch_size, n_channels, **kwargs):
     """
      Helper function creating a U-Net model instance with the given parameters

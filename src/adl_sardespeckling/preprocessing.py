@@ -72,7 +72,7 @@ def add_speckle_noise(image_path, stdv_path, out_path, ):
     stdv_array = stdv.read(band=1)
 
     # Create the gaussian noise array
-    noisy_array = image_array + (stdv_array/3200.)*(image_array * gauss)
+    noisy_array = image_array + 0.7*(stdv_array/3200.)*(image_array * gauss)
     noisy_array = noisy_array.astype(np.int32)
 
     # Apply some smoothing to remove extreme outliers
